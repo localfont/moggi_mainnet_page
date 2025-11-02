@@ -1,63 +1,151 @@
-import Image from "next/image";
+import { SearchCommand } from '@/components/search-command';
+import { getLatestBlocks, getLatestTransactions } from '@/lib/api';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Box, ArrowRightLeft, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { formatNumber, formatTimeAgo, truncateHash, formatEther } from '@/lib/format-utils';
+import Link from 'next/link';
 
-export default function Home() {
+export const dynamic = 'force-dynamic';
+
+export default async function Home() {
+  let latestBlocks;
+  let latestTransactions;
+
+  try {
+    [latestBlocks, latestTransactions] = await Promise.all([
+      getLatestBlocks(10),
+      getLatestTransactions(10),
+    ]);
+  } catch (error) {
+    console.error('Error fetching data:', error);
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-black">
+      <main className="container mx-auto px-6 py-12">
+        <div className="flex flex-col items-center gap-6 mb-12">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <h1 className="text-5xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+              Welcome Monad Dev
+            </h1>
+            <p className="text-lg text-zinc-600 dark:text-zinc-400">
+              Fast, composable blockchain explorer for Monad Mainnet
+            </p>
+          </div>
+
+          <div className="w-full max-w-2xl">
+            <SearchCommand />
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-7xl mx-auto">
+          {/* Latest Blocks Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Box className="h-5 w-5 text-blue-600" />
+                Latest Blocks
+              </CardTitle>
+              <CardDescription>Most recent blocks on the Monad network</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {latestBlocks && latestBlocks.data.length > 0 ? (
+                <div className="space-y-3">
+                  {latestBlocks.data.map((block) => (
+                    <Link
+                      key={block.number}
+                      href={`/block/${block.number}`}
+                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
+                    >
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="font-mono">
+                            #{formatNumber(block.number)}
+                          </Badge>
+                          <span className="text-xs text-zinc-500 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {formatTimeAgo(block.timestamp)}
+                          </span>
+                        </div>
+                        <div className="text-xs text-zinc-500">
+                          {block.transactionCount} transactions
+                        </div>
+                      </div>
+                      <div className="text-right text-sm text-zinc-600 dark:text-zinc-400">
+                        <div className="font-mono text-xs truncate max-w-[120px]">
+                          {truncateHash(block.miner, 6, 4)}
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-zinc-500 text-center py-8">No blocks available</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Latest Transactions Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ArrowRightLeft className="h-5 w-5 text-purple-600" />
+                Latest Transactions
+              </CardTitle>
+              <CardDescription>Most recent transactions on the network</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {latestTransactions && latestTransactions.data.length > 0 ? (
+                <div className="space-y-3">
+                  {latestTransactions.data.map((tx) => (
+                    <Link
+                      key={tx.hash}
+                      href={`/tx/${tx.hash}`}
+                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs text-blue-600 truncate max-w-[140px]">
+                            {truncateHash(tx.hash, 8, 6)}
+                          </span>
+                          {tx.status !== undefined && (
+                            <Badge variant={tx.status ? 'default' : 'destructive'} className="text-xs flex items-center gap-1">
+                              {tx.status ? (
+                                <>
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  <span>Success</span>
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle className="h-3 w-3" />
+                                  <span>Failed</span>
+                                </>
+                              )}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-zinc-500 flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {formatTimeAgo(tx.timestamp)}
+                        </div>
+                        <div className="text-xs text-zinc-500">
+                          From {truncateHash(tx.from)} → {tx.to ? truncateHash(tx.to) : 'Contract'}
+                        </div>
+                      </div>
+                      <div className="ml-3 text-right">
+                        <div className="text-sm font-medium whitespace-nowrap">
+                          {formatEther(tx.value)} MON
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-zinc-500 text-center py-8">No transactions available</p>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>
