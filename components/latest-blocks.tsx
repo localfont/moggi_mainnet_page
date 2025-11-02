@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Box, Clock } from 'lucide-react';
+import { Box, Clock, ArrowRightLeft, FileCode2 } from 'lucide-react';
 import { formatNumber, formatTimeAgo, truncateHash } from '@/lib/format-utils';
 import { getLatestBlocks } from '@/lib/api';
 import type { Block, PaginatedResponse } from '@/lib/api';
@@ -83,6 +83,10 @@ export function LatestBlocks({ initialData }: LatestBlocksProps) {
           <div className="space-y-3">
             {blocks.data.map((block) => {
               const isNew = newBlockNumbers.has(block.number);
+              // Count contract deployments (transactions with to === null)
+              const contractCount = block.transactions?.filter(tx => tx.to === null).length || 0;
+              const regularTxCount = block.transactionCount - contractCount;
+
               return (
                 <Link
                   key={block.number}
@@ -104,8 +108,22 @@ export function LatestBlocks({ initialData }: LatestBlocksProps) {
                         {formatTimeAgo(block.timestamp)}
                       </span>
                     </div>
-                    <div className="text-xs text-zinc-500">
-                      {block.transactionCount} transactions
+                    <div className="flex items-center gap-2 text-xs">
+                      {regularTxCount > 0 && (
+                        <div className="flex items-center gap-1 text-blue-600">
+                          <ArrowRightLeft className="h-3 w-3" />
+                          <span>{regularTxCount} {regularTxCount === 1 ? 'tx' : 'txs'}</span>
+                        </div>
+                      )}
+                      {contractCount > 0 && (
+                        <div className="flex items-center gap-1 text-purple-600">
+                          <FileCode2 className="h-3 w-3" />
+                          <span>{contractCount} {contractCount === 1 ? 'contract' : 'contracts'}</span>
+                        </div>
+                      )}
+                      {block.transactionCount === 0 && (
+                        <span className="text-zinc-400">No transactions</span>
+                      )}
                     </div>
                   </div>
                   <div className="text-right text-sm text-zinc-600 dark:text-zinc-400">
