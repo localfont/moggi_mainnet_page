@@ -165,9 +165,13 @@ export default async function TransactionPage({ params }: TransactionPageProps) 
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">From</span>
                   {fromAddress?.isContract ? (
-                    <FileCode className="h-4 w-4 text-purple-600" title="Contract" />
+                    <span title="Contract">
+                      <FileCode className="h-4 w-4 text-purple-600" />
+                    </span>
                   ) : (
-                    <Wallet className="h-4 w-4 text-zinc-400" title="Wallet" />
+                    <span title="Wallet">
+                      <Wallet className="h-4 w-4 text-zinc-400" />
+                    </span>
                   )}
                 </div>
                 {fromMetadata ? (
@@ -200,9 +204,13 @@ export default async function TransactionPage({ params }: TransactionPageProps) 
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">To</span>
                   {transaction.to && toAddress?.isContract ? (
-                    <FileCode className="h-4 w-4 text-purple-600" title="Contract" />
+                    <span title="Contract">
+                      <FileCode className="h-4 w-4 text-purple-600" />
+                    </span>
                   ) : transaction.to ? (
-                    <Wallet className="h-4 w-4 text-zinc-400" title="Wallet" />
+                    <span title="Wallet">
+                      <Wallet className="h-4 w-4 text-zinc-400" />
+                    </span>
                   ) : null}
                 </div>
                 {transaction.to ? (

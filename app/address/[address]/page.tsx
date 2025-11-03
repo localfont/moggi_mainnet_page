@@ -68,9 +68,9 @@ export default async function AddressPage({ params }: AddressPageProps) {
       getAddressTransactions(address, 1, 20),
       getAddressTokenBalances(address, 1, 50),
       getAddressTokenTransfers(address, 1, 20),
-      getAddressNFTs(address, 1, 20).catch(() => ({ data: [], count: 0 })),
-      getAddressNFTTransfers(address, 1, 20).catch(() => ({ data: [], count: 0 })),
-      getAddressInternalTransactions(address, 1, 20).catch(() => ({ data: [], count: 0 })),
+      getAddressNFTs(address, 1, 20).catch(() => ({ data: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 } })),
+      getAddressNFTTransfers(address, 1, 20).catch(() => ({ data: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 } })),
+      getAddressInternalTransactions(address, 1, 20).catch(() => ({ data: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 } })),
     ]);
   } catch (e) {
     error = e instanceof Error ? e.message : 'Failed to load address';
@@ -359,7 +359,7 @@ export default async function AddressPage({ params }: AddressPageProps) {
             <TabsTrigger value="internal">
               <span className="hidden sm:inline">Internal</span>
               <span className="sm:hidden">Int</span>
-              <span className="ml-1">({internalTxs?.pagination?.total || internalTxs?.count || 0})</span>
+              <span className="ml-1">({internalTxs?.pagination?.total || 0})</span>
             </TabsTrigger>
             <TabsTrigger value="tokens">
               <span className="hidden sm:inline">Tokens</span>
@@ -374,12 +374,12 @@ export default async function AddressPage({ params }: AddressPageProps) {
             <TabsTrigger value="nfts">
               <span className="hidden sm:inline">NFTs</span>
               <span className="sm:hidden">NFT</span>
-              <span className="ml-1">({nfts?.pagination?.total || nfts?.count || 0})</span>
+              <span className="ml-1">({nfts?.pagination?.total || 0})</span>
             </TabsTrigger>
             <TabsTrigger value="nft-transfers">
               <span className="hidden sm:inline">NFT Transfers</span>
               <span className="sm:hidden">NFT Tx</span>
-              <span className="ml-1">({nftTransfers?.pagination?.total || nftTransfers?.count || 0})</span>
+              <span className="ml-1">({nftTransfers?.pagination?.total || 0})</span>
             </TabsTrigger>
           </TabsList>
 
