@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SearchCommand } from './search-command';
+import { ThemeToggle } from './theme-toggle';
 
 export function Header() {
   const pathname = usePathname();
@@ -27,7 +28,7 @@ export function Header() {
           </div>
 
           {/* Navigation - Right */}
-          <nav className="flex items-center gap-6 text-sm font-medium whitespace-nowrap">
+          <nav className="flex items-center gap-4 text-sm font-medium whitespace-nowrap">
             <Link
               href="/"
               className="text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
@@ -46,6 +47,7 @@ export function Header() {
             >
               FAQ
             </Link>
+            <ThemeToggle />
           </nav>
         </div>
       </div>
