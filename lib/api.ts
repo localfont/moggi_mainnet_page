@@ -344,3 +344,110 @@ export async function getAddressNFTTransfers(
   if (!res.ok) throw new Error(`Failed to fetch NFT transfers: ${res.statusText}`);
   return res.json();
 }
+
+// ABI & Function Decoding API
+export interface ContractABI {
+  address: string;
+  abi: any[];
+  name?: string;
+  compiler?: string;
+  verified?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface DecodedFunction {
+  methodId: string;
+  signature: string;
+  name: string;
+  args: any[];
+  decodedParams: Record<string, any>;
+}
+
+export interface FunctionSignature {
+  id?: string;
+  methodId: string;
+  signature: string;
+  verified?: boolean;
+  occurrences?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export async function getContractABI(address: string): Promise<ContractABI | null> {
+  const res = await fetch(`${API_BASE_URL}/api/abis/${address}`, {
+    cache: 'no-store',
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`Failed to fetch contract ABI: ${res.statusText}`);
+  return res.json();
+}
+
+export async function decodeTransactionInput(
+  contractAddress: string,
+  inputData: string
+): Promise<DecodedFunction | null> {
+  const res = await fetch(`${API_BASE_URL}/api/abis/decode`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contractAddress, inputData }),
+    cache: 'no-store',
+  });
+  if (res.status === 404 || !res.ok) return null;
+  return res.json();
+}
+
+export async function getFunctionSignature(methodId: string): Promise<FunctionSignature | null> {
+  const res = await fetch(`${API_BASE_URL}/api/abis/signatures/${methodId}`, {
+    cache: 'no-store',
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`Failed to fetch function signature: ${res.statusText}`);
+  return res.json();
+}
+
+// Enriched Transaction API
+export interface EnrichedAddressLabel {
+  address: string;
+  name: string;
+  label: string;
+  isToken: boolean;
+  isNFT: boolean;
+  isContract: boolean;
+  symbol?: string;
+  verified?: boolean;
+}
+
+export interface EnrichedTokenTransfer {
+  from: string;
+  to: string;
+  value: string;
+  token: {
+    address: string;
+    name: string;
+    symbol: string;
+    decimals: number;
+  };
+}
+
+export interface EnrichedTransaction extends Transaction {
+  methodName?: string;
+  inputInformation?: {
+    original: string;
+    defaultView: string;
+    decodeInputData?: Record<string, any>;
+  };
+  addressLabels?: Record<string, EnrichedAddressLabel>;
+  erc20TokensTransferred?: EnrichedTokenTransfer[];
+  erc721TokensTransferred?: any[];
+  erc1155TokensTransferred?: any[];
+  transactionFee?: string;
+}
+
+export async function getEnrichedTransaction(txHash: string): Promise<EnrichedTransaction> {
+  const res = await fetch(`${API_BASE_URL}/api/transactions/${txHash}?enriched=true`, {
+    cache: 'no-store',
+  });
+  if (!res.ok) throw new Error(`Failed to fetch enriched transaction: ${res.statusText}`);
+  return res.json();
+}

@@ -12,6 +12,7 @@ Base URL: `http://localhost:9009`
 - [Decoded Events Endpoints](#decoded-events-endpoints)
 - [Balance History Endpoints](#balance-history-endpoints)
 - [Contract Metadata & Labels](#contract-metadata--labels)
+- [ABI & Function Decoding](#abi--function-decoding)
 - [Stats Endpoints](#stats-endpoints)
 - [Indexing Endpoints](#indexing-endpoints)
 
@@ -1789,6 +1790,238 @@ POST /api/indexing/request/32992500
   "message": "Block already indexed",
   "blockNumber": "32992500",
   "status": "completed"
+}
+```
+
+---
+
+## ABI & Function Decoding
+
+Contract ABIs (Application Binary Interfaces) enable decoding of transaction input data and event logs. This section provides endpoints for storing, retrieving, and using ABIs to decode blockchain data.
+
+### GET /api/abis/:address
+Get the stored ABI for a contract address.
+
+**Example Request:**
+```
+GET /api/abis/0xfe3d943a7de4f0acb2faaba3af8ac6469e6751f3
+```
+
+**Example Response:**
+```json
+{
+  "address": "0xfe3d943a7de4f0acb2faaba3af8ac6469e6751f3",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "decimals",
+      "outputs": [{"internalType": "uint8", "name": "", "type": "uint8"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "latestRoundData",
+      "outputs": [
+        {"internalType": "uint80", "name": "roundId", "type": "uint80"},
+        {"internalType": "int256", "name": "answer", "type": "int256"},
+        {"internalType": "uint256", "name": "startedAt", "type": "uint256"},
+        {"internalType": "uint256", "name": "updatedAt", "type": "uint256"},
+        {"internalType": "uint80", "name": "answeredInRound", "type": "uint80"}
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "name": "Chainlink Price Feed Aggregator",
+  "compiler": null,
+  "verified": true,
+  "createdAt": "2025-11-03T21:58:29.123Z",
+  "updatedAt": "2025-11-03T21:58:29.123Z"
+}
+```
+
+### POST /api/abis
+Store or update a contract ABI.
+
+**Request Body:**
+```json
+{
+  "address": "0x1234567890abcdef1234567890abcdef12345678",
+  "abi": [
+    {
+      "inputs": [
+        {"internalType": "address", "name": "recipient", "type": "address"},
+        {"internalType": "uint256", "name": "amount", "type": "uint256"}
+      ],
+      "name": "transfer",
+      "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "name": "My Token Contract",
+  "compiler": "v0.8.19+commit.7dd6d404",
+  "verified": true
+}
+```
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "message": "ABI stored successfully"
+}
+```
+
+### DELETE /api/abis/:address
+Delete a stored ABI.
+
+**Example Request:**
+```
+DELETE /api/abis/0x1234567890abcdef1234567890abcdef12345678
+```
+
+**Example Response:**
+```json
+{
+  "success": true,
+  "message": "ABI deleted successfully"
+}
+```
+
+### GET /api/abis
+List all contracts with stored ABIs.
+
+**Query Parameters:**
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Results per page (default: 20, max: 100)
+
+**Example Request:**
+```
+GET /api/abis?page=1&limit=10
+```
+
+**Example Response:**
+```json
+{
+  "data": [
+    {
+      "address": "0xfe3d943a7de4f0acb2faaba3af8ac6469e6751f3",
+      "name": "Chainlink Price Feed Aggregator",
+      "compiler": null,
+      "verified": true,
+      "createdAt": "2025-11-03T21:58:29.123Z",
+      "updatedAt": "2025-11-03T21:58:29.123Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 1,
+    "totalPages": 1
+  }
+}
+```
+
+### POST /api/abis/decode
+Decode a transaction's input data using the stored ABI.
+
+**Request Body:**
+```json
+{
+  "contractAddress": "0xfe3d943a7de4f0acb2faaba3af8ac6469e6751f3",
+  "inputData": "0x6fadcf720000000000000000000000001234567890abcdef1234567890abcdef123456780000000000000000000000000000000000000000000000000000000000000040"
+}
+```
+
+**Example Response:**
+```json
+{
+  "methodId": "0x6fadcf72",
+  "signature": "forward(address,bytes)",
+  "name": "forward",
+  "args": [
+    "0x1234567890abcdef1234567890abcdef12345678",
+    "0x"
+  ],
+  "decodedParams": {
+    "target": "0x1234567890abcdef1234567890abcdef12345678",
+    "data": "0x"
+  }
+}
+```
+
+**Error Response (ABI Not Found):**
+```json
+{
+  "error": "Unable to decode - ABI not found or invalid input"
+}
+```
+
+### GET /api/abis/signatures/:methodId
+Get the function signature for a specific method ID (4-byte function selector).
+
+**Example Request:**
+```
+GET /api/abis/signatures/0x6fadcf72
+```
+
+**Example Response:**
+```json
+{
+  "id": "cm2yr8xqz000008l5hqe9bxyz",
+  "methodId": "0x6fadcf72",
+  "signature": "forward(address,bytes)",
+  "verified": true,
+  "occurrences": 1,
+  "createdAt": "2025-11-03T21:58:29.123Z",
+  "updatedAt": "2025-11-03T21:58:29.123Z"
+}
+```
+
+**Common Method IDs:**
+- `0xa9059cbb` - ERC20 `transfer(address,uint256)`
+- `0x095ea7b3` - ERC20 `approve(address,uint256)`
+- `0x23b872dd` - ERC20/ERC721 `transferFrom(address,address,uint256)`
+- `0xfeaf968c` - Chainlink `latestRoundData()`
+- `0x6fadcf72` - Forwarder `forward(address,bytes)`
+
+### GET /api/abis/signatures
+List popular function signatures ordered by occurrence count.
+
+**Query Parameters:**
+- `limit` (optional): Number of signatures to return (default: 50, max: 200)
+
+**Example Request:**
+```
+GET /api/abis/signatures?limit=10
+```
+
+**Example Response:**
+```json
+{
+  "data": [
+    {
+      "methodId": "0x6fadcf72",
+      "signature": "forward(address,bytes)",
+      "verified": true,
+      "occurrences": 125
+    },
+    {
+      "methodId": "0xfeaf968c",
+      "signature": "latestRoundData()",
+      "verified": true,
+      "occurrences": 89
+    },
+    {
+      "methodId": "0x313ce567",
+      "signature": "decimals()",
+      "verified": true,
+      "occurrences": 45
+    }
+  ],
+  "count": 10
 }
 ```
 

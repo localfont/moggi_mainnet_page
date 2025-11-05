@@ -1,4 +1,4 @@
-import { getTransaction, getAddressMetadata, getAddress } from '@/lib/api';
+import { getEnrichedTransaction, getAddressMetadata, getAddress } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -24,7 +24,8 @@ export default async function TransactionPage({ params }: TransactionPageProps) 
   let error;
 
   try {
-    transaction = await getTransaction(hash);
+    // Fetch enriched transaction (includes decoded function data)
+    transaction = await getEnrichedTransaction(hash);
 
     // Fetch metadata and address info for from and to addresses in parallel
     if (transaction) {
@@ -363,14 +364,63 @@ export default async function TransactionPage({ params }: TransactionPageProps) 
             {transaction.input && transaction.input !== '0x' && (
               <>
                 <Separator />
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-3">
                   <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
                     <FileCode className="h-4 w-4" />
                     Input Data
+                    {transaction.methodName && (
+                      <Badge variant="outline" className="ml-2">
+                        {transaction.methodName}
+                      </Badge>
+                    )}
                   </span>
-                  <code className="text-xs font-mono break-all bg-zinc-100 dark:bg-zinc-900 p-3 rounded-lg overflow-x-auto">
-                    {transaction.input}
-                  </code>
+
+                  {transaction.inputInformation?.decodeInputData && (
+                    <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-lg border border-blue-200 dark:border-blue-900">
+                      <div className="space-y-3">
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="default" className="bg-blue-600">
+                              Decoded Function Call
+                            </Badge>
+                          </div>
+                          <div className="flex items-baseline gap-2 flex-wrap">
+                            <span className="text-base font-bold text-blue-900 dark:text-blue-100">
+                              {transaction.methodName}
+                            </span>
+                            {transaction.inputInformation.defaultView && (
+                              <span className="text-xs text-blue-600 dark:text-blue-400 font-mono">
+                                {transaction.inputInformation.defaultView}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {Object.keys(transaction.inputInformation.decodeInputData).length > 0 && (
+                          <div className="space-y-2">
+                            <span className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide">Parameters:</span>
+                            <div className="space-y-2">
+                              {Object.entries(transaction.inputInformation.decodeInputData).map(([key, value]) => (
+                                <div key={key} className="flex flex-col gap-1 p-3 bg-white/50 dark:bg-black/20 rounded border border-blue-200 dark:border-blue-900">
+                                  <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">{key}:</span>
+                                  <code className="text-xs font-mono text-zinc-900 dark:text-zinc-100 break-all">
+                                    {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
+                                  </code>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-1">
+                    <span className="text-xs text-zinc-500">Raw Input:</span>
+                    <code className="text-xs font-mono break-all bg-zinc-100 dark:bg-zinc-900 p-3 rounded-lg overflow-x-auto block">
+                      {transaction.input}
+                    </code>
+                  </div>
                 </div>
               </>
             )}
@@ -440,6 +490,64 @@ export default async function TransactionPage({ params }: TransactionPageProps) 
             )}
           </CardContent>
         </Card>
+
+        {/* Token Transfers */}
+        {transaction.erc20TokensTransferred && transaction.erc20TokensTransferred.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Token Transfers ({transaction.erc20TokensTransferred.length})</CardTitle>
+              <CardDescription>ERC-20 tokens transferred in this transaction</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {transaction.erc20TokensTransferred.map((transfer, index) => (
+                  <div key={index} className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg border border-green-200 dark:border-green-900">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="default" className="bg-green-600">
+                          ERC-20
+                        </Badge>
+                        <span className="font-semibold text-green-900 dark:text-green-100">
+                          {transfer.token.name}
+                        </span>
+                        <Badge variant="outline" className="text-xs">
+                          {transfer.token.symbol}
+                        </Badge>
+                      </div>
+
+                      <div className="grid gap-2 text-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-zinc-600 dark:text-zinc-400">From:</span>
+                          <Link href={`/address/${transfer.from}`} className="font-mono text-blue-600 hover:underline">
+                            {truncateHash(transfer.from)}
+                          </Link>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-zinc-600 dark:text-zinc-400">To:</span>
+                          <Link href={`/address/${transfer.to}`} className="font-mono text-blue-600 hover:underline">
+                            {truncateHash(transfer.to)}
+                          </Link>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-zinc-600 dark:text-zinc-400">Amount:</span>
+                          <span className="font-semibold">
+                            {(Number(transfer.value) / Math.pow(10, transfer.token.decimals)).toLocaleString()} {transfer.token.symbol}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-zinc-600 dark:text-zinc-400">Token Contract:</span>
+                          <Link href={`/address/${transfer.token.address}`} className="font-mono text-xs text-blue-600 hover:underline">
+                            {truncateHash(transfer.token.address)}
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Logs */}
         {transaction.logs && transaction.logs.length > 0 && (

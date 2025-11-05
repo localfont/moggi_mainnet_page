@@ -6,7 +6,8 @@
       "Bash(bunx shadcn@latest add:*)",
       "Bash(bun run build)",
       "Bash(dir /s /b \"C:\\Users\\Zortos\\moggi_mainnet_page\\app\")",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(dir /s /b \"C:\\Users\\Zortos\\moggi_mainnet_page\\components\")"
     ],
     "deny": [],
     "ask": []
