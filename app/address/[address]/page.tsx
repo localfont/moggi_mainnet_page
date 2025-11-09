@@ -32,6 +32,7 @@ import { formatEther, formatTimestamp, formatTimeAgo, truncateHash, formatNumber
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { AddressDisplay } from '@/components/address-display';
+import { BytecodeDisplay } from '@/components/bytecode-display';
 
 export const dynamic = 'force-dynamic';
 
@@ -333,20 +334,7 @@ export default async function AddressPage({ params }: AddressPageProps) {
               </div>
 
               {addressData.contractCode && (
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Contract Bytecode</span>
-                  <div className="p-3 bg-zinc-100 dark:bg-zinc-900 rounded-lg border overflow-x-auto">
-                    <code className="text-xs font-mono break-all text-zinc-700 dark:text-zinc-300">
-                      {addressData.contractCode.slice(0, 300)}
-                      {addressData.contractCode.length > 300 && '...'}
-                    </code>
-                  </div>
-                  {addressData.contractCode.length > 300 && (
-                    <span className="text-xs text-zinc-500">
-                      Showing first 300 characters of {addressData.contractCode.length} total
-                    </span>
-                  )}
-                </div>
+                <BytecodeDisplay bytecode={addressData.contractCode} />
               )}
             </CardContent>
           </Card>
@@ -401,8 +389,8 @@ export default async function AddressPage({ params }: AddressPageProps) {
                 {transactions && transactions.data.length > 0 ? (
                   <div className="space-y-3">
                     {transactions.data.map((tx) => (
-                      <div key={tx.hash} className="flex items-center justify-between p-4 border rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-                        <div className="flex-1 min-w-0 space-y-1">
+                      <div key={tx.hash} className="flex items-center justify-between p-2.5 border rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                        <div className="flex-1 min-w-0 space-y-0.5">
                           <div className="flex items-center gap-2">
                             <Link href={`/tx/${tx.hash}`} className="text-sm font-mono text-blue-600 hover:underline truncate">
                               {truncateHash(tx.hash, 10, 8)}
@@ -456,8 +444,8 @@ export default async function AddressPage({ params }: AddressPageProps) {
                 {internalTxs && internalTxs.data.length > 0 ? (
                   <div className="space-y-3">
                     {internalTxs.data.map((tx, idx) => (
-                      <div key={`${tx.transactionHash}-${idx}`} className="flex items-center justify-between p-4 rounded-xl border-2 border-zinc-200 dark:border-zinc-800 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50/50 dark:hover:bg-purple-950/20 transition-all">
-                        <div className="flex-1 min-w-0 space-y-2">
+                      <div key={`${tx.transactionHash}-${idx}`} className="flex items-center justify-between p-2.5 rounded-xl border-2 border-zinc-200 dark:border-zinc-800 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50/50 dark:hover:bg-purple-950/20 transition-all">
+                        <div className="flex-1 min-w-0 space-y-1">
                           <div className="flex items-center gap-2">
                             {tx.transactionHash && (
                               <Link href={`/tx/${tx.transactionHash}`} className="text-sm font-mono text-purple-600 dark:text-purple-400 hover:underline truncate font-semibold">
@@ -558,8 +546,8 @@ export default async function AddressPage({ params }: AddressPageProps) {
                 {tokenTransfers && tokenTransfers.data.length > 0 ? (
                   <div className="space-y-3">
                     {tokenTransfers.data.map((transfer) => (
-                      <div key={`${transfer.transactionHash}-${transfer.logIndex}`} className="flex items-center justify-between p-4 rounded-xl border-2 border-zinc-200 dark:border-zinc-800 hover:border-cyan-300 dark:hover:border-cyan-700 hover:bg-cyan-50/50 dark:hover:bg-cyan-950/20 transition-all">
-                        <div className="flex-1 min-w-0 space-y-2">
+                      <div key={`${transfer.transactionHash}-${transfer.logIndex}`} className="flex items-center justify-between p-2.5 rounded-xl border-2 border-zinc-200 dark:border-zinc-800 hover:border-cyan-300 dark:hover:border-cyan-700 hover:bg-cyan-50/50 dark:hover:bg-cyan-950/20 transition-all">
+                        <div className="flex-1 min-w-0 space-y-1">
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="bg-cyan-100 dark:bg-cyan-900/30 border-cyan-300 dark:border-cyan-700 font-mono font-semibold">
                               {transfer.token.symbol}
@@ -666,8 +654,8 @@ export default async function AddressPage({ params }: AddressPageProps) {
                 {nftTransfers && nftTransfers.data.length > 0 ? (
                   <div className="space-y-3">
                     {nftTransfers.data.map((transfer, idx) => (
-                      <div key={`${transfer.transactionHash}-${transfer.tokenId}-${idx}`} className="flex items-center justify-between p-4 rounded-xl border-2 border-zinc-200 dark:border-zinc-800 hover:border-amber-300 dark:hover:border-amber-700 hover:bg-amber-50/50 dark:hover:bg-amber-950/20 transition-all">
-                        <div className="flex-1 min-w-0 space-y-2">
+                      <div key={`${transfer.transactionHash}-${transfer.tokenId}-${idx}`} className="flex items-center justify-between p-2.5 rounded-xl border-2 border-zinc-200 dark:border-zinc-800 hover:border-amber-300 dark:hover:border-amber-700 hover:bg-amber-50/50 dark:hover:bg-amber-950/20 transition-all">
+                        <div className="flex-1 min-w-0 space-y-1">
                           <div className="flex items-center gap-2">
                             {transfer.collection?.name && (
                               <span className="font-bold text-base">{transfer.collection.name}</span>
